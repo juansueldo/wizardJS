@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WizardJS - Ejemplo de Uso</title>
+    <script src="wizard.js"></script>
+    <!-- CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<!-- JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .demo-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .demo-options {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .demo-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .demo-btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #667eea;
+            color: white;
+        }
+
+        .demo-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .demo-btn.secondary {
+            background: #48bb78;
+        }
+
+        .demo-btn.tertiary {
+            background: #ed8936;
+        }
+
+
+        .code-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            margin-top: 30px;
+        }
+
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .info-box {
+            background: #e6f3ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .data-preview {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 13px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="demo-options">
+            <h2>Selecciona un modo:</h2>
+            <div class="demo-buttons">
+                <button class="demo-btn" onclick="loadWizardMode()">
+                    📝 Modo Wizard (Usuario)
+                </button>
+                <button class="demo-btn secondary" onclick="loadGeneratorMode()">
+                    ⚙️ Modo Generador (Desarrollador)
+                </button>
+                <button class="demo-btn tertiary" onclick="loadFromJSON()">
+                    📄 Cargar desde JSON
+                </button>
+            </div>
+        </div>
+
+        <div id="wizardContainer"></div>
+
+        <div id="dataContainer" style="display: none;" class="code-section">
+            <h3>📊 Datos Recolectados:</h3>
+            <div id="dataPreview" class="data-preview"></div>
+        </div>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
+    <script>
+        let currentWizard = null;
+
+        // Configuración de ejemplo
+        const exampleConfig = {
+            title: "Registro BOT",
+            steps: [
+                {
+                    id: "activity_info",
+                    title: "Actividad del negocio",
+                    description: "Selecciona la actividad del negocio",
+                    fields: [
+                        {
+                            name: "activity",
+                            label: "Actividad",
+                            type: "select",
+                            required: true,
+                            options: [
+                                { value: "gastronomy", label: "Gastronomía" },
+                                { value: "health", label: "Salud" }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    id: "gastronomy_info",
+                    title: "Información del negocio",
+                    condition: {
+                        field: "activity",
+                        operator: "equals",
+                        value: "gastronomy"
+                    },
+                    fields: [
+                        {
+                            name: "companyType",
+                            label: "Tipo de negocio gastronómico",
+                            type: "select",
+                            required: true,
+                            options: [
+                                { value: "restaurant", label: "Restaurante" },
+                                { value: "delivery", label: "Delivery" },
+                                { value: "takeaway", label: "Take Away" },
+                                { value: "all", label: "Todos" },
+                            ]
+                        },
+                        {
+                            name: "companyMenu",
+                            label: "Subir el menú",
+                            type: "file",
+                            required: true,
+                        }
+                    ]
+                },
+                {
+                    id: "preferences",
+                    title: "Preferencias",
+                    description: "Personaliza tu experiencia",
+                    fields: [
+                        {
+                            name: "notifications",
+                            label: "Notificaciones que deseas recibir",
+                            type: "checkbox",
+                            options: [
+                                { value: "email", label: "Por Email" },
+                                { value: "sms", label: "Por SMS" },
+                                { value: "push", label: "Notificaciones Push" }
+                            ]
+                        },
+                        {
+                            name: "newsletter",
+                            label: "¿Deseas recibir nuestro newsletter?",
+                            type: "radio",
+                            required: true,
+                            options: [
+                                { value: "yes", label: "Sí, me interesa" },
+                                { value: "no", label: "No, gracias" }
+                            ]
+                        },
+                        {
+                            name: "comments",
+                            label: "Comentarios adicionales",
+                            type: "textarea",
+                            placeholder: "¿Algo más que quieras decirnos?"
+                        }
+                    ]
+                }
+            ]
+        };
+
+        function loadWizardMode() {
+            document.getElementById('dataContainer').style.display = 'none';
+            
+            if (currentWizard) {
+                currentWizard = null;
+            }
+
+            currentWizard = new WizardJS('#wizardContainer', exampleConfig, { mode: 'wizard' });
+            currentWizard.init();
+
+            // Configurar eventos
+            currentWizard.on('stepChange', (step, data) => {
+                console.log('Paso cambiado:', step, data);
+                updateDataPreview(data);
+            });
+
+            currentWizard.on('complete', (data) => {
+                console.log('Wizard completado:', data);
+                updateDataPreview(data);
+                alert('¡Wizard completado exitosamente! Revisa los datos recolectados abajo.');
+            });
+
+            currentWizard.on('validation', (errors) => {
+                console.log('Errores de validación:', errors);
+            });
+
+        }
+
+        function loadGeneratorMode() {
+            document.getElementById('dataContainer').style.display = 'none';
+            
+            if (currentWizard) {
+                currentWizard = null;
+            }
+
+            currentWizard = new WizardJS('#wizardContainer', null, { mode: 'generator' });
+            currentWizard.init();
+
+        }
+
+        function loadFromJSON() {
+            const jsonInput = prompt('Pega aquí tu configuración JSON:');
+            
+            if (jsonInput) {
+                try {
+                    const config = JSON.parse(jsonInput);
+                    
+                    if (currentWizard) {
+                        currentWizard = null;
+                    }
+
+                    currentWizard = new WizardJS('#wizardContainer', config, { mode: 'wizard' });
+                    currentWizard.init();
+
+                    currentWizard.on('complete', (data) => {
+                        updateDataPreview(data);
+                        alert('¡Wizard completado!');
+                    });
+
+
+                } catch (e) {
+                    alert('Error al parsear JSON: ' + e.message);
+                }
+            }
+        }
+
+        function updateDataPreview(data) {
+            document.getElementById('dataContainer').style.display = 'block';
+            document.getElementById('dataPreview').textContent = JSON.stringify(data, null, 2);
+        }
+
+        // Crear algunos ejemplos de configuración predefinidos
+        const configExamples = {
+            survey: {
+                title: "Encuesta de Satisfacción",
+                steps: [
+                    {
+                        id: "rating",
+                        title: "Calificación General",
+                        fields: [
+                            {
+                                name: "satisfaction",
+                                label: "¿Qué tan satisfecho estás con nuestro servicio?",
+                                type: "radio",
+                                required: true,
+                                options: [
+                                    { value: "5", label: "Muy satisfecho" },
+                                    { value: "4", label: "Satisfecho" },
+                                    { value: "3", label: "Neutral" },
+                                    { value: "2", label: "Insatisfecho" },
+                                    { value: "1", label: "Muy insatisfecho" }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            onboarding: {
+                title: "Configuración de Cuenta",
+                steps: [
+                    {
+                        id: "account",
+                        title: "Crear Cuenta",
+                        fields: [
+                            {
+                                name: "username",
+                                label: "Nombre de usuario",
+                                type: "text",
+                                required: true
+                            },
+                            {
+                                name: "password",
+                                label: "Contraseña",
+                                type: "password",
+                                required: true
+                            }
+                        ]
+                    }
+                ]
+            }
+        };
+    </script>
+</body>
+</html>
