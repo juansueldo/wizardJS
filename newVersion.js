@@ -464,7 +464,7 @@ class WizardJS {
         const preview = document.getElementById(this.inputAdd);
         if (preview) {
             if(this.inputAdd !== 'jsonPreview'){
-                preview.value = JSON.stringify(this.generatorConfig, null, 2);
+                preview.value = JSON.stringify(this.generatorConfig);
             }else{
                 preview.textContent = JSON.stringify(this.generatorConfig, null, 2);
             }
